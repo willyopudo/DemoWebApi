@@ -9,49 +9,40 @@ namespace DemoWebApi.Controllers
     public class MoviesController : ControllerBase
     {
         private readonly MovieContext _dbContext;
+        private readonly IMovieService _movieService;
 
-        public MoviesController(MovieContext dbContext)
+        public MoviesController(IMovieService movieService)
         {
-            _dbContext = dbContext;
+            _movieService = movieService;
         }
 
         // GET: api/Movies
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Movie>>> GetMovies()
         {
-            if (_dbContext.Movies == null)
-            {
-                return NotFound();
-            }
-            return await _dbContext.Movies.ToListAsync();
+            return Ok(await _movieService.GetAllMoviesAsync());
         }
 
         // GET: api/Movies/5
         [HttpGet("{id}")]
         public async Task<ActionResult<Movie>> GetMovie(int id)
         {
-            if (_dbContext.Movies == null)
-            {
-                return NotFound();
-            }
-            var movie = await _dbContext.Movies.FindAsync(id);
-
+            var movie = await _movieService.GetMovieByIdAsync(id);
             if (movie == null)
             {
                 return NotFound();
             }
+            return Ok(movie);
 
-            return movie;
         }
 
         // POST: api/Movies
         [HttpPost]
         public async Task<ActionResult<Movie>> PostMovie(Movie movie)
         {
-            _dbContext.Movies.Add(movie);
-            await _dbContext.SaveChangesAsync();
+            await _movieService.AddMovieAsync(movie);
+            return CreatedAtAction(nameof(Get), new { id = movie.Id }, movie);
 
-            return CreatedAtAction(nameof(GetMovie), new { id = movie.Id }, movie);
         }
 
         // PUT: api/Movies/5
@@ -62,52 +53,49 @@ namespace DemoWebApi.Controllers
             {
                 return BadRequest();
             }
-
-            _dbContext.Entry(movie).State = EntityState.Modified;
-
-            try
-            {
-                await _dbContext.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!MovieExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
-
+            await _movieService.UpdateMovieAsync(movie);
             return NoContent();
+
         }
 
         // DELETE: api/Movies/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteMovie(int id)
         {
-            if (_dbContext.Movies == null)
-            {
-                return NotFound();
-            }
 
-            var movie = await _dbContext.Movies.FindAsync(id);
+            var movie = await _movieService.GetMovieByIdAsync(id);
             if (movie == null)
             {
                 return NotFound();
             }
 
-            _dbContext.Movies.Remove(movie);
-            await _dbContext.SaveChangesAsync();
+            await _movieService.DeleteMovieAsync(id);
 
             return NoContent();
         }
 
-        private bool MovieExists(long id)
+        [HttpGet("GetAllHeaders")]
+        public ActionResult<Dictionary<string, string>> GetAllHeaders()
         {
-            return (_dbContext.Movies?.Any(e => e.Id == id)).GetValueOrDefault();
+            Dictionary<string, string> requestHeaders =
+                new Dictionary<string, string>();
+            foreach (var header in Request.Headers)
+            {
+                requestHeaders.Add(header.Key, header.Value);
+            }
+            return requestHeaders;
         }
+
+        [HttpGet("GetHeaderData")]
+        public ActionResult<string> GetHeaderData(string headerKey)
+        {
+        Request.Headers.TryGetValue(headerKey, out var headerValue);
+        return Ok(headerValue);
+        }
+
+        // private bool MovieExists(long id)
+        // {
+        //     return (_movieService.Movies?.Any(e => e.Id == id)).GetValueOrDefault();
+        // }
     }
 }
