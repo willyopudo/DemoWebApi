@@ -1,3 +1,6 @@
+using DemoWebApi.Models;
+using DemoWebApi.Repository;
+
 namespace DemoWebApi.Services
 {
     public class MovieService : IMovieService
@@ -10,10 +13,10 @@ namespace DemoWebApi.Services
         }
 
         public async Task<IEnumerable<Movie>> GetAllMoviesAsync() =>
-            await _MovieRepository.GetAllMoviesAsync();
+            await _movieRepository.GetAllMoviesAsync();
 
         public async Task<Movie> GetMovieByIdAsync(int id) =>
-            await _MovieRepository.GetMovieByIdAsync(id);
+            await _movieRepository.GetMovieByIdAsync(id);
 
         public async Task AddMovieAsync(Movie movie) =>
             await _movieRepository.AddMovieAsync(movie);
@@ -23,6 +26,11 @@ namespace DemoWebApi.Services
 
         public async Task DeleteMovieAsync(int id) =>
             await _movieRepository.DeleteMovieAsync(id);
+
+        public void saveChangesAsync()
+        {
+            _movieRepository.saveChanges();
+        }
     }
 
 }

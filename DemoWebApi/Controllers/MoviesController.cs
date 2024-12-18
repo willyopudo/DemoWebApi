@@ -1,6 +1,6 @@
 ﻿using DemoWebApi.Models;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+using DemoWebApi.Services;
 
 namespace DemoWebApi.Controllers
 {
@@ -8,7 +8,6 @@ namespace DemoWebApi.Controllers
     [ApiController]
     public class MoviesController : ControllerBase
     {
-        private readonly MovieContext _dbContext;
         private readonly IMovieService _movieService;
 
         public MoviesController(IMovieService movieService)
@@ -41,7 +40,8 @@ namespace DemoWebApi.Controllers
         public async Task<ActionResult<Movie>> PostMovie(Movie movie)
         {
             await _movieService.AddMovieAsync(movie);
-            return CreatedAtAction(nameof(Get), new { id = movie.Id }, movie);
+            _movieService.saveChangesAsync();
+            return CreatedAtAction(nameof(GetMovie), new { id = movie.Id }, movie);
 
         }
 
@@ -54,6 +54,7 @@ namespace DemoWebApi.Controllers
                 return BadRequest();
             }
             await _movieService.UpdateMovieAsync(movie);
+            _movieService.saveChangesAsync();
             return NoContent();
 
         }

@@ -1,4 +1,6 @@
 using DemoWebApi.Models;
+using DemoWebApi.Repository;
+using DemoWebApi.Services;
 using Microsoft.EntityFrameworkCore;
 
 namespace DemoWebApi
@@ -16,12 +18,14 @@ namespace DemoWebApi
 
             builder.Services.AddControllers();
             builder.Services.AddTransient<DataSeeder>();
+            builder.Services.AddScoped<IMovieRepository, MovieRepository>();
+            builder.Services.AddScoped<IMovieService, MovieService>();
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
 
             var app = builder.Build();
-            SeedData(app);
+            //SeedData(app);
 
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
@@ -38,16 +42,17 @@ namespace DemoWebApi
 
             app.Run();
         }
-    }
 
-    void SeedData(IHost app)
-    {
-        var scopedFactory = app.Services.GetService<IServiceScopeFactory>();
-
-        using (var scope = scopedFactory.CreateScope())
+        void SeedData(IHost app)
         {
-            var service = scope.ServiceProvider.GetService<DataSeeder>();
-            service.Seed();
+            var scopedFactory = app.Services.GetService<IServiceScopeFactory>();
+
+            using (var scope = scopedFactory.CreateScope())
+            {
+                var service = scope.ServiceProvider.GetService<DataSeeder>();
+                service.Seed();
+            }
         }
     }
+
 }

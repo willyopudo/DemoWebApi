@@ -1,3 +1,6 @@
+using DemoWebApi.Models;
+using Microsoft.EntityFrameworkCore;
+
 namespace DemoWebApi.Repository
 {
     public class MovieRepository : IMovieRepository
@@ -20,6 +23,11 @@ namespace DemoWebApi.Repository
 
         public async Task UpdateMovieAsync(Movie movie) =>
             _context.Movies.Update(movie);
+
+        public void saveChanges()
+        {
+            _context.SaveChangesAsync();
+        }
 
         public async Task DeleteMovieAsync(int id)
         {
