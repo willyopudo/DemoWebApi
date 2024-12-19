@@ -7,7 +7,7 @@ namespace DemoWebApi
 {
     public class Program
     {
-        public static void Main(string[] args)
+        public static async Task Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
 
@@ -17,7 +17,6 @@ namespace DemoWebApi
                 options.UseInMemoryDatabase("MovieContext"));
 
             builder.Services.AddControllers();
-            builder.Services.AddTransient<DataSeeder>();
             builder.Services.AddScoped<IMovieRepository, MovieRepository>();
             builder.Services.AddScoped<IMovieService, MovieService>();
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -25,7 +24,14 @@ namespace DemoWebApi
             builder.Services.AddSwaggerGen();
 
             var app = builder.Build();
-            //SeedData(app);
+            using (var scope = app.Services.CreateScope())
+            {
+                var services = scope.ServiceProvider;
+
+                await SeedData.Initialize(services);
+                await using var dbContext = scope.ServiceProvider.GetRequiredService<MovieContext>();
+                //await dbContext.Database.MigrateAsync();
+            }
 
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
@@ -43,16 +49,6 @@ namespace DemoWebApi
             app.Run();
         }
 
-        void SeedData(IHost app)
-        {
-            var scopedFactory = app.Services.GetService<IServiceScopeFactory>();
-
-            using (var scope = scopedFactory.CreateScope())
-            {
-                var service = scope.ServiceProvider.GetService<DataSeeder>();
-                service.Seed();
-            }
-        }
     }
 
 }
